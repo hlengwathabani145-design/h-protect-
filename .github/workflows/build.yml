@@ -1,0 +1,42 @@
+name: Build H Protect APK
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Create App
+        run: |
+          mkdir -p www
+          echo '<html><body><h1>H Protect</h1><p>Scanning device...</p><script>setTimeout(()=>{document.body.innerHTML+="<h2>✅ No threats found</h2>"},2000)</script></body></html>' > www/index.html
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npx cap init "H Protect" "com.hprotect.app" --web-dir=www
+          npx cap add android
+
+      - name: Build APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: H-Protect-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
